@@ -1,0 +1,30 @@
+<resources>
+    <string name="app_name">Lambda Spectrogram</string>
+    <string name="enter_details">Please enter your details below</string>
+    <string name="first_name">First Name</string>
+    <string name="last_name">Last Name</string>
+    <string name="submit">Submit</string>
+    <string name="seven">7</string>
+    <string name="eight">8</string>
+    <string name="nine">9</string>
+    <string name="four">4</string>
+    <string name="five">5</string>
+    <string name="six">6</string>
+    <string name="one">1</string>
+    <string name="two">2</string>
+    <string name="three">3</string>
+    <string name="zero">0</string>
+    <string name="divide">÷</string>
+    <string name="multiply">×</string>
+    <string name="minus">−</string>
+    <string name="plus">+</string>
+    <string name="clear">C</string>
+    <string name="decimal">.</string>
+    <string name="equals">=</string>
+    <string name="initialResult">0.0</string>
+    <string name="tone_1_result">Tone 1 probability: %.1f</string>
+    <string name="tone_2_result">Tone 2 probability: %.1f</string>
+    <string name="tone_3_result">Tone 3 probability: %.1f</string>
+    <string name="tone_4_result">Tone 4 probability: %.1f</string>
+    <string name="tone_5_result">Tone 5 probability: %.1f</string>
+</resources>

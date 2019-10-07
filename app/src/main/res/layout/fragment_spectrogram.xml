@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        tools:context="com.example.android.lambdaspectrogram.SpectrogramFragment">
+<LinearLayout android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+    <com.github.mikephil.charting.charts.LineChart
+            android:id="@+id/chart1"
+            android:layout_width="match_parent"
+            android:layout_height="250dp" />
+    <TextView
+            android:layout_width="match_parent"
+            android:layout_height="150dp"
+            android:id="@+id/spectrogramView"/>
+    <TextView
+            android:text="@string/tone_1_result"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:id="@+id/tone_1_text"/>
+    <TextView
+            android:text="@string/tone_2_result"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:id="@+id/tone_2_text"/>
+    <TextView
+            android:text="@string/tone_3_result"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:id="@+id/tone_3_text"/>
+    <TextView
+            android:text="@string/tone_4_result"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:id="@+id/tone_4_text"/>
+    <TextView
+            android:text="@string/tone_5_result"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:id="@+id/tone_5_text"/>
+    <Button
+            android:text="Record"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:id="@+id/recordButton"/>
+    <Button
+            android:text="Get Spectrogram"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:id="@+id/button"/>
+    <Button
+            android:text="Predict Tones"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:id="@+id/predictButton"/>
+</LinearLayout>
+</layout>
