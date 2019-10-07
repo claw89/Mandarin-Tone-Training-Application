@@ -101,7 +101,7 @@ class SpectrogramViewModel: ViewModel() {
         if (_signal.value != null) {
             // Create an instance of CognitoCachingCredentialsProvider
             val cognitoProvider = CognitoCachingCredentialsProvider(
-                applicationContext, "us-east-1:63de3df8-f7a4-4c62-a0d1-fe8726cdc525", Regions.US_EAST_1
+                applicationContext, "*****Add the AWS Cognito Identity pool ID*****", Regions.US_EAST_1
             )
 
             // Create LambdaInvokerFactory, to be used to instantiate the Lambda proxy.
