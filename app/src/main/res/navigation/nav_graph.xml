@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/nav_graph" app:startDestination="@id/homeFragment">
+    <fragment android:id="@+id/homeFragment" android:name="com.example.lambdaspectrogram.HomeFragment"
+              android:label="HomeFragment">
+        <action android:id="@+id/action_homeFragment_to_gameFragment" app:destination="@id/gameFragment"/>
+    </fragment>
+    <fragment android:id="@+id/gameFragment" android:name="com.example.lambdaspectrogram.GameFragment"
+              android:label="GameFragment">
+        <action android:id="@+id/action_gameFragment_to_resultFragment" app:destination="@id/resultFragment"/>
+    </fragment>
+    <fragment android:id="@+id/resultFragment" android:name="com.example.lambdaspectrogram.ResultFragment"
+              android:label="ResultFragment">
+        <argument android:name="score" app:argType="integer"/>
+        <action android:id="@+id/action_resultFragment_to_gameFragment" app:destination="@id/gameFragment"/>
+    </fragment>
+</navigation>

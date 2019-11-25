@@ -1,10 +1,16 @@
 package com.example.lambdaspectrogram
 
+import android.Manifest
+import android.app.Activity
+import android.content.ContextWrapper
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
@@ -13,9 +19,25 @@ import com.example.lambdaspectrogram.databinding.FragmentSpectrogramBinding
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 class SpectrogramFragment: Fragment() {
     private lateinit var viewModel: SpectrogramViewModel
+
+    fun View.getActivity(): Activity? {
+        var context = context
+        while (context is ContextWrapper) {
+            if (context is Activity) {
+                return context
+            }
+            context = context.baseContext
+        }
+        return null
+    }
 
     override fun onCreateView(inflater: LayoutInflater,
                               container: ViewGroup?,
@@ -26,6 +48,12 @@ class SpectrogramFragment: Fragment() {
             container,
             false
         )
+
+        // Check for recording permission
+        if (ContextCompat.checkSelfPermission(this.context!!, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            val permissions = arrayOf(Manifest.permission.RECORD_AUDIO)
+            ActivityCompat.requestPermissions(this.activity!!, permissions,0)
+        }
 
         viewModel = ViewModelProviders.of(this).get(SpectrogramViewModel::class.java)
 
@@ -71,9 +99,23 @@ class SpectrogramFragment: Fragment() {
             binding.spectrogramView.text = ""
             viewModel.getSpectrogram(this.context!!)
         }
-        binding.recordButton.setOnClickListener {
-            viewModel.startRecording(this.context!!, this.activity!!)
-        }
+        //binding.recordButton.setOnClickListener {
+        //    viewModel.startRecording()
+        //}
+
+        binding.recordButton.setOnTouchListener(object : View.OnTouchListener {
+            override fun onTouch(v: View?, event: MotionEvent?): Boolean {
+
+                when (event?.action) {
+                    MotionEvent.ACTION_DOWN -> CoroutineScope(Dispatchers.IO).launch {
+                        viewModel.startRecording()
+                    }
+                    MotionEvent.ACTION_UP -> viewModel.stopRecording()
+                }
+
+                return v?.onTouchEvent(event) ?: true
+            }
+        })
 
         binding.predictButton.setOnClickListener {
             viewModel.classifySequence(context!!)

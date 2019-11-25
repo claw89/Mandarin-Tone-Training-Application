@@ -29,8 +29,8 @@ import org.tensorflow.lite.Interpreter
 class SpectrogramViewModel: ViewModel() {
 
     lateinit var myInterface: MyInterface
-    private val _signal = MutableLiveData<List<Float>>()
-    val signal: LiveData<List<Float>>
+    private val _signal = MutableLiveData<MutableList<Float>>()
+    val signal: LiveData<MutableList<Float>>
         get() = _signal
     private val _resultString = MutableLiveData<String>()
     val resultString: LiveData<String>
@@ -61,23 +61,29 @@ class SpectrogramViewModel: ViewModel() {
     private var modelInputs: Array<Array<Array<FloatArray>>> = arrayOf(arrayOf(arrayOf(FloatArray(1))))
     var outputs : Array<FloatArray> = arrayOf( floatArrayOf( 0.0f , 0.0f , 0.0f , 0.0f , 0.0f) )
 
-    fun startRecording(context: Context, activity: Activity): Boolean {
-        // Check for recording permission
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-            val permissions = arrayOf(Manifest.permission.RECORD_AUDIO)
-            ActivityCompat.requestPermissions(activity, permissions,0)
-        }
+    private var record = false
+    private val audioData = ByteArray(BUFFER)
+    private val os = ByteArrayOutputStream()
 
-        _isRecording.value = true
-        val audioData = ByteArray(BUFFER)
-        val os = ByteArrayOutputStream()
+
+
+    suspend fun startRecording() {
+        record = true
+        Log.i("SpectrogramViewModel", "function started")
         audioRecorder.startRecording()
-        MotionEvent.ACTION_DOWN
-        while (System.currentTimeMillis() < startTime + 2000) {
+        Log.i("SpectrogramViewModel", "started recorder")
+        while (record) {
             audioRecorder.read(audioData, 0, audioData.size)
             os.write(audioData, 0, audioData.size)
+            Log.i("SpectrogramViewModel", "record = $record; recording")
         }
+    }
 
+    fun stopRecording() {
+        record = false
+        Log.i("SpectrogramViewModel", "record = $record; stopping recording")
+        audioRecorder.stop()
+        Log.i("SpectrogramViewModel", "stopped recording")
         val data: MutableList<Float> = mutableListOf()
         for (item in os.toByteArray()) {
             data.add(item.toFloat())
@@ -93,8 +99,10 @@ class SpectrogramViewModel: ViewModel() {
             }
         }
         _signal.value = data
-        _isRecording.value = false
-        return true
+        Log.i("SpectrogramViewModel", "signal size: ${os.size()}")
+        Log.i("SpectrogramViewModel", "signal size: ${data.size}")
+        Log.i("SpectrogramViewModel", "signal size: ${_signal.value?.size}")
+        os.reset()
     }
 
     fun getSpectrogram(applicationContext: Context) {
@@ -113,7 +121,7 @@ class SpectrogramViewModel: ViewModel() {
             // You can provide your own data binder by implementing
             // LambdaDataBinder.
             myInterface = factory.build(MyInterface::class.java)
-            val request = RequestClass(_signal.value!!)
+            val request = RequestClass(_signal.value!!, 1)
             // The Lambda function invocation results in a network call.
             // Make sure it is not called from the main thread.
             MyAsyncTask(this).execute(request)
@@ -149,7 +157,7 @@ class SpectrogramViewModel: ViewModel() {
             val activity = activityReference.get()
             if (activity != null) {
                 try {
-                    response = activity.myInterface.ScipyTestLambdaFunction(params[0])
+                    response = activity.myInterface.AndroidToneBackendLambdaFunction(params[0])
                 } catch (lfe: LambdaFunctionException) {
                     Log.e("Tag", "Failed to invoke echo", lfe)
                     response = null
@@ -170,7 +178,7 @@ class SpectrogramViewModel: ViewModel() {
             val activity = activityReference.get()
             if (activity != null) {
                 activity._resultString.value = "Obtained spectrogram with dimensions ${result.shape} "
-                activity.modelInputs = result.body
+                activity.modelInputs = result.body[0]
             }
         }
     }

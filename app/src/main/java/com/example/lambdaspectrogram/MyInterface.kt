@@ -9,6 +9,6 @@ interface MyInterface {
      * The function name is the method name.
      */
     @LambdaFunction
-    fun ScipyTestLambdaFunction(request: RequestClass): ResponseClass
+    fun AndroidToneBackendLambdaFunction(request: RequestClass): ResponseClass
 
 }
