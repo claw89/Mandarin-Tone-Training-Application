@@ -154,9 +154,9 @@ class GameViewModel: ViewModel() {
             }
         }
         val numSyllables = _word.value!!.first.length
-        val url = "https://pvxqcafn71.execute-api.us-east-1.amazonaws.com/dev/predict"
+        val url = "https://*****************************.amazonaws.com/dev/predict"
         val payload = mapOf("num_syl" to numSyllables.toString())
-        val headers = mapOf("x-api-key" to "WjxBRA2JGt1NnPZjyeQHU8oIg70uGkhX7lyPgO0J")
+        val headers = mapOf("x-api-key" to "**********************************")
         val jsonData = Gson().toJson(data)
 
         CoroutineScope(Dispatchers.IO).launch {
