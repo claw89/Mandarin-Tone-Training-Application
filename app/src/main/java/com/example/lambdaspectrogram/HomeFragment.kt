@@ -1,9 +1,13 @@
 package com.example.lambdaspectrogram
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
@@ -29,6 +33,12 @@ class HomeFragment: Fragment() {
             false
         )
 
+        // Check for recording permission
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            val permissions = arrayOf(Manifest.permission.RECORD_AUDIO)
+            ActivityCompat.requestPermissions(requireActivity(), permissions,0)
+        }
+
         viewModel = ViewModelProviders.of(this).get(HomeViewModel::class.java)
 
         viewModel.loadModules(readJSONFromAsset()!!)
@@ -51,7 +61,7 @@ class HomeFragment: Fragment() {
     }
 
     private fun readJSONFromAsset(): String? {
-        var json: String? = null
+        val json: String?
         try {
             val  inputStream: InputStream = context!!.assets.open("data.json")
             json = inputStream.bufferedReader().use{it.readText()}

@@ -21,7 +21,7 @@ class ResultFragment: Fragment() {
         )
 
         val args = ResultFragmentArgs.fromBundle(arguments!!)
-        binding.scoreTextView.setText("Score: ${args.score} / 10")
+        binding.scoreTextView.text = getString(R.string.scoreString, args.score)
 
         binding.playAgainButton.setOnClickListener { view ->
             Navigation.findNavController(view).navigate(R.id.action_resultFragment_to_gameFragment)

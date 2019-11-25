@@ -5,28 +5,19 @@ import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaPlayer
 import android.media.MediaRecorder
-import android.os.AsyncTask
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.amazonaws.auth.CognitoCachingCredentialsProvider
-import com.amazonaws.mobileconnectors.lambdainvoker.LambdaFunctionException
-import com.amazonaws.mobileconnectors.lambdainvoker.LambdaInvokerFactory
-import com.amazonaws.regions.Regions
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import khttp.post
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.lang.ref.WeakReference
 import java.io.ByteArrayOutputStream
-import org.tensorflow.lite.Interpreter
 
 class GameViewModel: ViewModel() {
-
-    //lateinit var myInterface: MyInterface
 
     private val SAMPLING_RATE = 44100
     private val CHANNEL_IN_CONFIG = AudioFormat.CHANNEL_IN_MONO
@@ -42,12 +33,6 @@ class GameViewModel: ViewModel() {
     private val audioData = ByteArray(BUFFER)
     private val os = ByteArrayOutputStream()
 
-//    private val _modelInputs = MutableLiveData<Array<Array<Array<FloatArray>>>>()
-//    val modelInputs: LiveData<Array<Array<Array<FloatArray>>>>
-//        get() = _modelInputs
-//    var outputs : Array<FloatArray> = arrayOf( floatArrayOf( 0.0f , 0.0f , 0.0f , 0.0f , 0.0f) )
-
-
     // The current word
     private val _word = MutableLiveData<Triple<String, List<Int>, Int>>()
     val word: LiveData<Triple<String, List<Int>, Int>>
@@ -58,7 +43,7 @@ class GameViewModel: ViewModel() {
     val score: LiveData<Int>
         get() = _score
 
-    // The predicted tone
+    // The predicted tones
     private val _predictedTones = MutableLiveData<List<Int>>()
     val predictedTones: LiveData<List<Int>>
         get() = _predictedTones
@@ -68,13 +53,13 @@ class GameViewModel: ViewModel() {
     val correctTones: LiveData<Boolean>
         get() = _correctTones
 
-    // The list of words - the front of the list is the next word to guess
-    private lateinit var wordList: MutableList<Triple<String, List<Int>, Int>>
-
     // Event which triggers the end of the game
     private val _eventGameFinish = MutableLiveData<Boolean>()
     val eventGameFinish: LiveData<Boolean>
         get() = _eventGameFinish
+
+    // The list of words - the front of the list is the next word to guess
+    private lateinit var wordList: MutableList<Triple<String, List<Int>, Int>>
 
     init {
         resetList()

@@ -27,4 +27,7 @@
     <string name="tone_3_result">Tone 3 probability: %.1f</string>
     <string name="tone_4_result">Tone 4 probability: %.1f</string>
     <string name="tone_5_result">Tone 5 probability: %.1f</string>
+    <string name="correctString">Correct</string>
+    <string name="incorrectString">Try again&#8230;</string>
+    <string name="scoreString">Score: %1$d / 10</string>
 </resources>
