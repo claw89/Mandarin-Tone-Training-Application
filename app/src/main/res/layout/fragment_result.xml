@@ -17,5 +17,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" android:id="@+id/playAgainButton"
             android:layout_gravity="center"/>
+    <Button
+            android:text="Home"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:id="@+id/homeButton" android:layout_gravity="center"
+            android:layout_marginTop="16dp"/>
 </LinearLayout>
 </layout>

@@ -1,5 +1,7 @@
 package com.example.lambdaspectrogram
 
+import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -27,6 +29,7 @@ class GameFragment: Fragment() {
             container,
             false
         )
+
 
         binding.nextButton.isEnabled = false
         binding.nextButton.isClickable = false
@@ -59,15 +62,35 @@ class GameFragment: Fragment() {
             }
         })
 
+        viewModel.predictedTones.observe(this, Observer { newPredictedTones ->
+            if (newPredictedTones.isEmpty()) {
+                binding.reportedTonesTextView.text = ""
+            }
+            else {
+                var newString = "Sounded like "
+                for (newPredictedTone in newPredictedTones) {
+                    newString += "tone " + newPredictedTone.toString() + ", "
+                }
+                binding.reportedTonesTextView.text = newString
+            }
+        })
+
+        viewModel.bitmapDrawable.observe(this, Observer { newBitmapDrawable ->
+            binding.spectrogramImageView.background = newBitmapDrawable
+        })
+
+
+
         binding.nextButton.setOnClickListener {
             binding.resultTextView.text = ""
+            binding.reportedTonesTextView.text = ""
             viewModel.scorePlusOne()
             viewModel.nextWord()
             binding.nextButton.isEnabled = false
             binding.nextButton.isClickable = false
         }
 
-        binding.button4.setOnClickListener {
+        binding.playButton.setOnClickListener {
             viewModel.playAudio(requireContext())
         }
 
@@ -75,12 +98,15 @@ class GameFragment: Fragment() {
             override fun onTouch(v: View, event: MotionEvent): Boolean {
 
                 when (event.action) {
-                    MotionEvent.ACTION_DOWN -> CoroutineScope(Dispatchers.IO).launch {
-                        viewModel.startRecording()
+                    MotionEvent.ACTION_DOWN -> {
+                        binding.resultTextView.text = ""
+                        CoroutineScope(Dispatchers.IO).launch {
+                            viewModel.startRecording()
+                        }
                     }
                     MotionEvent.ACTION_UP -> {
                         binding.progressBar1.visibility = View.VISIBLE
-                        viewModel.stopRecording()
+                        viewModel.stopRecording(resources)
                         v.performClick()
                     }
                 }

@@ -23,9 +23,9 @@ class HomeViewModel: ViewModel() {
     }
 
     fun loadModules(exampleData: String) {
-        val url = "https://************************.amazonaws.com/dev/predict"
+        val url = "https://pvxqcafn71.execute-api.us-east-1.amazonaws.com/dev/predict"
         val payload = mapOf("num_syl" to "2")
-        val headers = mapOf("x-api-key" to "***********************************")
+        val headers = mapOf("x-api-key" to "WjxBRA2JGt1NnPZjyeQHU8oIg70uGkhX7lyPgO0J")
         val jsonData = Gson().toJson(exampleData)
         CoroutineScope(Dispatchers.IO).launch {
             var statusCode = 504

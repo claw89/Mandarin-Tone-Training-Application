@@ -27,7 +27,10 @@ class ResultFragment: Fragment() {
             Navigation.findNavController(view).navigate(R.id.action_resultFragment_to_gameFragment)
         }
 
+        binding.homeButton.setOnClickListener { view ->
+            Navigation.findNavController(view).navigate(R.id.action_resultFragment_to_homeFragment)
+        }
+
         return binding.root
     }
-
 }

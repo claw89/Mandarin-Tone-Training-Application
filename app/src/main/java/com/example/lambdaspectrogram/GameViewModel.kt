@@ -1,6 +1,13 @@
 package com.example.lambdaspectrogram
 
 import android.content.Context
+import android.content.res.Resources
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.ShapeDrawable
+import android.graphics.drawable.shapes.RectShape
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaPlayer
@@ -16,6 +23,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
+import kotlin.collections.Map
+import kotlin.math.min
+import kotlin.math.roundToInt
 
 class GameViewModel: ViewModel() {
 
@@ -57,6 +67,11 @@ class GameViewModel: ViewModel() {
     private val _eventGameFinish = MutableLiveData<Boolean>()
     val eventGameFinish: LiveData<Boolean>
         get() = _eventGameFinish
+
+    // Event which triggers the end of the game
+    private val _bitmapDrawable = MutableLiveData<BitmapDrawable>()
+    val bitmapDrawable: LiveData<BitmapDrawable>
+        get() = _bitmapDrawable
 
     // The list of words - the front of the list is the next word to guess
     private lateinit var wordList: MutableList<Triple<String, List<Int>, Int>>
@@ -119,7 +134,7 @@ class GameViewModel: ViewModel() {
         }
     }
 
-    fun stopRecording() {
+    fun stopRecording(resources: Resources) {
         record = false
         Log.i("GameViewModel", "record = $record; stopping recording")
         audioRecorder.stop()
@@ -139,39 +154,99 @@ class GameViewModel: ViewModel() {
             }
         }
         val numSyllables = _word.value!!.first.length
-        val url = "https://*****************************.amazonaws.com/dev/predict"
+        val url = "https://pvxqcafn71.execute-api.us-east-1.amazonaws.com/dev/predict"
         val payload = mapOf("num_syl" to numSyllables.toString())
-        val headers = mapOf("x-api-key" to "**********************************")
+        val headers = mapOf("x-api-key" to "WjxBRA2JGt1NnPZjyeQHU8oIg70uGkhX7lyPgO0J")
         val jsonData = Gson().toJson(data)
 
         CoroutineScope(Dispatchers.IO).launch {
             var correct = true
+            val cnnTones = mutableListOf<Int>()
+            val rnnTones = mutableListOf<Int>()
+            val avgTones = mutableListOf<Int>()
             val tones = mutableListOf<Int>()
             val response = post(url=url, params=payload, headers=headers, data=jsonData)
             Log.i("GameViewModel", response.statusCode.toString())
             if (response.statusCode == 200) {
                 val predictionsListType = object : TypeToken<List<List<Float>>>() {}.type
-                val predictions = Gson().fromJson<List<List<Float>>>(
-                    response.jsonObject.getString("predictions"),
+                val cnnPredictions = Gson().fromJson<List<List<Float>>>(
+                    response.jsonObject.getString("cnn_predictions"),
                     predictionsListType
                 )
-                for (prediction in predictions) {
+                val rnnPredictions = Gson().fromJson<List<List<Float>>>(
+                    response.jsonObject.getString("rnn_predictions"),
+                    predictionsListType
+                )
+                for (predictionPair in cnnPredictions.zip(rnnPredictions)) {
+                    Log.i("GameViewModel", "CNN Predictions")
+                    for (item in predictionPair.first) {
+                        Log.i("GameViewModel", item.toString())
+                    }
+                    cnnTones.add(predictionPair.first.withIndex().maxBy { it.value }!!.index + 1)
+                    Log.i("GameViewModel", "RNN Predictions")
+                    for (item in predictionPair.second) {
+                        Log.i("GameViewModel", item.toString())
+                    }
+                    rnnTones.add(predictionPair.second.withIndex().maxBy { it.value }!!.index + 1)
+                    val prediction = predictionPair.first.zip(predictionPair.second).map { (a, b) -> a + b }
+                    Log.i("GameViewModel", "Averaged Predictions")
                     for (item in prediction) {
                         Log.i("GameViewModel", item.toString())
                     }
                     Log.i("GameViewModel", (prediction.withIndex().maxBy { it.value }!!.index + 1).toString())
-                    tones.add(prediction.withIndex().maxBy { it.value }!!.index + 1)
+                    avgTones.add(prediction.withIndex().maxBy { it.value }!!.index + 1)
 
                 }
                 val actualTones = _word.value!!.second
-                for ((actualTone, predictedTone) in actualTones zip tones) {
-                    if (actualTone != predictedTone)
-                        correct = false
+                val predictedTones = cnnTones.zip(rnnTones).zip(avgTones) { (a, b), c -> Triple(a, b, c)}
+                for ((actualTone, predictedTone) in actualTones.zip(predictedTones)) {
+                    if (actualTone == 3) {
+                        tones.add(predictedTone.second)
+                        if (predictedTone.second != 3) {
+                            correct = false
+                        }
+                    }
+                    else {
+                        tones.add(predictedTone.third)
+                        if (actualTone != predictedTone.third) {
+                            correct = false
+                        }
+                    }
                 }
                 _predictedTones.postValue(tones)
+
+                val mapListType = object : TypeToken<List<Map<String, List<Float>>>>() {}.type
+                val maps = Gson().fromJson<List<Map<String, List<Float>>>>(
+                    response.jsonObject.getString("maps"),
+                    mapListType
+                )
+//                Log.i("GameViewModel", maps[0].get("x").toString())
+//                Log.i("GameViewModel", maps[0].get("y").toString())
+//                Log.i("GameViewModel", maps[0].get("z").toString())
+//                Log.i("GameViewModel", maps[0].get("z")!![10].toString())
+                val bitmap = Bitmap.createBitmap(_word.value!!.first.length*150, 150, Bitmap.Config.ARGB_8888)
+                val canvas = Canvas(bitmap)
+                val shapeDrawable = ShapeDrawable(RectShape())
+                for ((i, map) in maps.withIndex()) {
+                    for (j in 0 until map.get("x")!!.size) {
+                        shapeDrawable.setBounds(
+                            map.get("x")!![j].toInt() + (150 * i),
+                            map.get("y")!![j].toInt(),
+                            map.get("x")!![j].toInt() + (150 * i) + 1,
+                            map.get("y")!![j].toInt() + 1
+                        )
+                        //Log.i("GameViewModel", (map.get("z")!![i].toString()))
+                        //Log.i("GameViewModel", (map.get("z")!![i] * 255).toString())
+                        //Log.i("GameViewModel", (map.get("z")!![i] * 255).roundToInt().toString())
+                        val opacity = Integer.toHexString(min((map.get("z")!![j] * 255).roundToInt(), 255))
+                        //Log.i("GameViewModel", opacity)
+                        shapeDrawable.getPaint().setColor(Color.parseColor("#" + opacity + "000000"))
+                        shapeDrawable.draw(canvas)
+                    }
+                }
+                _bitmapDrawable.postValue(BitmapDrawable(resources, bitmap))
             }
             else {
-                correct = false
                 for (i in 0..numSyllables) {
                     tones.add(0)
                 }
@@ -181,90 +256,4 @@ class GameViewModel: ViewModel() {
         }
         os.reset()
     }
-
-//        val cognitoProvider = CognitoCachingCredentialsProvider(
-//            applicationContext, "us-east-1:63de3df8-f7a4-4c62-a0d1-fe8726cdc525", Regions.US_EAST_1
-//        )
-//
-//        // Create LambdaInvokerFactory, to be used to instantiate the Lambda proxy.
-//        val factory = LambdaInvokerFactory(
-//            applicationContext,
-//            Regions.US_EAST_1, cognitoProvider
-//        )
-//        // Create the Lambda proxy object with a default Json data binder.
-//        // You can provide your own data binder by implementing
-//        // LambdaDataBinder.
-//        myInterface = factory.build(MyInterface::class.java)
-//        val request = RequestClass(data, _word.value!!.first.length)
-//        // The Lambda function invocation results in a network call.
-//        // Make sure it is not called from the main thread.
-//        MyAsyncTask(this).execute(request)
-
-
-//    fun classifySequence (interpreter: Interpreter, inputs: Array<Array<Array<FloatArray>>>): Int? {
-//        interpreter.run(inputs , outputs)
-//        val maxIndex = indexOfMax(outputs[0])
-//        var predictedTone = 0
-//        if (maxIndex != null) {
-//            predictedTone = maxIndex + 1
-//        }
-//        return predictedTone
-//    }
-//
-//    private fun indexOfMax(a: FloatArray): Int? {
-//
-//        if (a.size == 0)
-//            return null
-//
-//        var max: Float = Float.MIN_VALUE
-//        var maxPosition = 0
-//
-//        for (i in a.indices) {
-//            if (a[i] >= max) {
-//                max = a[i]
-//                maxPosition = i
-//            }
-//        }
-//        return maxPosition
-//    }
-//
-//    private class MyAsyncTask internal constructor(context: GameViewModel): AsyncTask<RequestClass, Void, ResponseClass>() {
-//
-//        private val activityReference: WeakReference<GameViewModel> = WeakReference(context)
-//
-//
-//        override fun doInBackground(vararg params: RequestClass): ResponseClass? {
-//            // invoke "echo" method. In case it fails, it will throw a
-//            // LambdaFunctionException.
-//
-//            var response: ResponseClass?
-//            val activity = activityReference.get()
-//            if (activity != null) {
-//                try {
-//                    response = activity.myInterface.AndroidToneBackendLambdaFunction(params[0])
-//                } catch (lfe: LambdaFunctionException) {
-//                    Log.e("Tag", "Failed to invoke echo", lfe)
-//                    response = null
-//                }
-//            }
-//            else {
-//                response = null
-//            }
-//            return response
-//        }
-//
-//        override fun onPostExecute(result: ResponseClass?) {
-//            if (result == null) {
-//                return
-//            }
-//
-//            // Set the result string
-//            val activity = activityReference.get()
-//            if (activity != null) {
-//                activity._modelInputs.value = result.body[0]
-//
-//            }
-//        }
-//    }
-//
 }
